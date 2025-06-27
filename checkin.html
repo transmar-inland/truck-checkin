@@ -1,11 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="ar" dir="rtl">
   <head>
-    <meta charset="UTF-8">
-    <title>Check-In Validation</title>
+    <meta charset="UTF-8" />
+    <title>التحقق من الكود</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, sans-serif;
+        background-color: #f9f9f9;
+        color: #333;
+        text-align: center;
+        padding-top: 5vh;
+        direction: rtl;
+        margin: 0;
+      }
+      .logo {
+        max-width: 220px;
+        margin: 0 auto 30px;
+      }
+      #msg {
+        font-size: 1.6rem;
+        margin-bottom: 10px;
+      }
+      #sub-msg {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 30px;
+        padding: 0 20px;
+      }
+      .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #1c61e7;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 30px;
+      }
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
-  <body style="font-family:sans-serif;text-align:center;padding-top:25vh">
-    <div id="msg">🔄 Validating your check-in...</div>
+  <body>
+    <img src="https://www.iacc.holdings/Cms_Data/Contents/IACC/Media/portfolio/transmar-Logo-New1.png" class="logo" alt="Transmar Logo" />
+    
+    <div class="loader"></div>
+    <div id="msg">جاري التحقق من الكود المستخدم</div>
+    <div id="sub-msg">
+      يرجى العلم انه في حالة استخدام الكود لا يمكنك استخدامه مرة اخرى، الكود يكون متاح مرة واحده فقط للاستخدام
+    </div>
 
     <script>
       const params = new URLSearchParams(window.location.search);
@@ -15,7 +59,9 @@
       const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSckiPwKok7Fo7S7AdsKb1pTx9WzO--pr_1I_jnFJqzO9JhYXQ/viewform?usp=pp_url&entry.1144902241=";
 
       if (!token) {
-        document.getElementById("msg").innerText = "❌ Token missing.";
+        document.getElementById("msg").innerText = "❌ لم يتم العثور على الكود.";
+        document.querySelector(".loader").style.display = "none";
+        document.getElementById("sub-msg").style.display = "none";
       } else {
         fetch(scriptURL + "?token=" + token)
           .then(res => res.text())
@@ -23,15 +69,23 @@
             if (status === "VALID") {
               window.location.href = formURL + token;
             } else if (status === "USED") {
-              document.getElementById("msg").innerText = "❌ This token has already been used.";
+              document.querySelector(".loader").style.display = "none";
+              document.getElementById("msg").innerText = "❌ لا يمكنك استخدام نفس الكود اكثر من مرة واحدة، اذا كنت تحتاج للمساعدة برجاء التواصل مع المقاول الخاص بك";
+              document.getElementById("sub-msg").style.display = "none";
             } else if (status === "INVALID") {
-              document.getElementById("msg").innerText = "❌ Invalid token.";
+              document.querySelector(".loader").style.display = "none";
+              document.getElementById("msg").innerText = "❌ الكود غير صحيح. برجاء التأكد من صحة الكود أو التواصل مع المقاول الخاص بك.";
+              document.getElementById("sub-msg").style.display = "none";
             } else {
-              document.getElementById("msg").innerText = "❌ Unknown error.";
+              document.querySelector(".loader").style.display = "none";
+              document.getElementById("msg").innerText = "❌ حدث خطأ غير متوقع.";
+              document.getElementById("sub-msg").style.display = "none";
             }
           })
           .catch(() => {
-            document.getElementById("msg").innerText = "❌ Network error. Please try again.";
+            document.querySelector(".loader").style.display = "none";
+            document.getElementById("msg").innerText = "❌ تعذر الاتصال. حاول مرة أخرى.";
+            document.getElementById("sub-msg").style.display = "none";
           });
       }
     </script>
