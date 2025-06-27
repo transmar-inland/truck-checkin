@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Check-In Validation</title>
+  </head>
+  <body style="font-family:sans-serif;text-align:center;padding-top:25vh">
+    <div id="msg">🔄 Validating your check-in...</div>
+
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+
+      const scriptURL = "https://script.google.com/macros/s/AKfycbwDpCikoV4jMSmwdfMSHEtCVacKiYiSNU1mKaI1xWMm7jVE8zVkkVLwTG2WCW2ucTLa-A/exec";
+      const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSckiPwKok7Fo7S7AdsKb1pTx9WzO--pr_1I_jnFJqzO9JhYXQ/viewform?usp=pp_url&entry.1144902241=";
+
+      if (!token) {
+        document.getElementById("msg").innerText = "❌ Token missing.";
+      } else {
+        fetch(scriptURL + "?token=" + token)
+          .then(res => res.text())
+          .then(status => {
+            if (status === "VALID") {
+              window.location.href = formURL + token;
+            } else if (status === "USED") {
+              document.getElementById("msg").innerText = "❌ This token has already been used.";
+            } else if (status === "INVALID") {
+              document.getElementById("msg").innerText = "❌ Invalid token.";
+            } else {
+              document.getElementById("msg").innerText = "❌ Unknown error.";
+            }
+          })
+          .catch(() => {
+            document.getElementById("msg").innerText = "❌ Network error. Please try again.";
+          });
+      }
+    </script>
+  </body>
+</html>
