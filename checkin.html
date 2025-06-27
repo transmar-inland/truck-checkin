@@ -44,7 +44,7 @@
   </head>
   <body>
     <img src="https://www.iacc.holdings/Cms_Data/Contents/IACC/Media/portfolio/transmar-Logo-New1.png" class="logo" alt="Transmar Logo" />
-    
+
     <div class="loader"></div>
     <div id="msg">جاري التحقق من الكود المستخدم</div>
     <div id="sub-msg">
@@ -56,38 +56,59 @@
       const token = params.get("token");
 
       const scriptURL = "https://script.google.com/macros/s/AKfycbwDpCikoV4jMSmwdfMSHEtCVacKiYiSNU1mKaI1xWMm7jVE8zVkkVLwTG2WCW2ucTLa-A/exec";
-      const formURL = "https://docs.google.com/forms/d/e/1FAIpQLSckiPwKok7Fo7S7AdsKb1pTx9WzO--pr_1I_jnFJqzO9JhYXQ/viewform?usp=pp_url&entry.1144902241=";
+      const formBaseURL = "https://docs.google.com/forms/d/e/1FAIpQLSckiPwKok7Fo7S7AdsKb1pTx9WzO--pr_1I_jnFJqzO9JhYXQ/viewform";
 
-      if (!token) {
-        document.getElementById("msg").innerText = "❌ لم يتم العثور على الكود.";
-        document.querySelector(".loader").style.display = "none";
-        document.getElementById("sub-msg").style.display = "none";
-      } else {
-        fetch(scriptURL + "?token=" + token)
-          .then(res => res.text())
-          .then(status => {
-            if (status === "VALID") {
-              window.location.href = formURL + token;
-            } else if (status === "USED") {
-              document.querySelector(".loader").style.display = "none";
-              document.getElementById("msg").innerText = "❌ لا يمكنك استخدام نفس الكود اكثر من مرة واحدة، اذا كنت تحتاج للمساعدة برجاء التواصل مع المقاول الخاص بك";
-              document.getElementById("sub-msg").style.display = "none";
-            } else if (status === "INVALID") {
-              document.querySelector(".loader").style.display = "none";
-              document.getElementById("msg").innerText = "❌ الكود غير صحيح. برجاء التأكد من صحة الكود أو التواصل مع المقاول الخاص بك.";
-              document.getElementById("sub-msg").style.display = "none";
-            } else {
-              document.querySelector(".loader").style.display = "none";
-              document.getElementById("msg").innerText = "❌ حدث خطأ غير متوقع.";
-              document.getElementById("sub-msg").style.display = "none";
-            }
-          })
-          .catch(() => {
-            document.querySelector(".loader").style.display = "none";
-            document.getElementById("msg").innerText = "❌ تعذر الاتصال. حاول مرة أخرى.";
-            document.getElementById("sub-msg").style.display = "none";
-          });
+      // Correct field IDs
+      const entryToken = "entry.1144902241";
+      const entryLat = "entry.1517560392";
+      const entryLng = "entry.603366986";
+
+      function redirectToForm(lat, lng) {
+        const formURL = `${formBaseURL}?usp=pp_url&${entryToken}=${encodeURIComponent(token)}&${entryLat}=${lat}&${entryLng}=${lng}`;
+        window.location.href = formURL;
       }
+
+      function showError(msg) {
+        document.querySelector(".loader").style.display = "none";
+        document.getElementById("msg").innerText = msg;
+        document.getElementById("sub-msg").style.display = "none";
+      }
+
+      function startProcess() {
+        if (!token) {
+          showError("❌ لم يتم العثور على الكود.");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            fetch(scriptURL + "?token=" + token)
+              .then(res => res.text())
+              .then(status => {
+                if (status === "VALID") {
+                  redirectToForm(lat, lng);
+                } else if (status === "USED") {
+                  showError("❌ لا يمكنك استخدام نفس الكود اكثر من مرة واحدة، اذا كنت تحتاج للمساعدة برجاء التواصل مع المقاول الخاص بك");
+                } else if (status === "INVALID") {
+                  showError("❌ الكود غير صحيح. برجاء التأكد من صحة الكود أو التواصل مع المقاول الخاص بك.");
+                } else {
+                  showError("❌ حدث خطأ غير متوقع.");
+                }
+              })
+              .catch(() => {
+                showError("❌ تعذر الاتصال. حاول مرة أخرى.");
+              });
+          },
+          () => {
+            showError("❌ تعذر الحصول على الموقع. تأكد من تفعيل GPS والمحاولة مرة أخرى.");
+          }
+        );
+      }
+
+      window.onload = () => setTimeout(startProcess, 500);
     </script>
   </body>
 </html>
